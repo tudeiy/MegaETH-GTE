@@ -18,8 +18,14 @@
 
 ## Instalasi
 
-1. Install Python 3.x dari [python.org](https://python.org)
-2. Install dependencies yang diperlukan:
+1. Clone repository dari GitHub:
+```bash
+git clone https://github.com/Winsnip-Tools/MegaETH-GTE/
+cd MegaETH-GTE
+```
+
+2. Install Python 3.x dari [python.org](https://python.org)
+3. Install dependencies yang diperlukan:
 ```bash
 pip install -r installini.txt
 ```
