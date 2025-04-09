@@ -20,7 +20,7 @@ def swap(web3, account, router, token_in, token_out, amount_decimal):
     token_out_data = GTE_TOKENS[token_out]
     deadline = int(time.time()) + 1800
     amount_in = int(amount_decimal * (10 ** token_in_data["decimals"]))
-    amount_out_min = int(amount_in * (1 - SLIPPAGE))
+    amount_out_min = 0
     
     max_retries = 3
     retry_count = 0
@@ -31,7 +31,10 @@ def swap(web3, account, router, token_in, token_out, amount_decimal):
                 nonce += 1
 
             if token_in == BASE_TOKEN:
-                path = [Web3.to_checksum_address(token_out_data["address"])]
+                path = [
+                    Web3.to_checksum_address(GTE_TOKENS["WETH"]["address"]),
+                    Web3.to_checksum_address(token_out_data["address"])
+                ]
                 tx = router.functions.swapExactETHForTokens(
                     amount_out_min,
                     path,
@@ -46,7 +49,10 @@ def swap(web3, account, router, token_in, token_out, amount_decimal):
                 })
             elif token_out == BASE_TOKEN:
                 approve(web3, account, token_in_data["address"], amount_in)
-                path = [Web3.to_checksum_address(token_in_data["address"])]
+                path = [
+                    Web3.to_checksum_address(token_in_data["address"]),
+                    Web3.to_checksum_address(GTE_TOKENS["WETH"]["address"])
+                ]
                 tx = router.functions.swapExactTokensForETH(
                     amount_in,
                     amount_out_min,
@@ -63,6 +69,7 @@ def swap(web3, account, router, token_in, token_out, amount_decimal):
                 approve(web3, account, token_in_data["address"], amount_in)
                 path = [
                     Web3.to_checksum_address(token_in_data["address"]),
+                    Web3.to_checksum_address(GTE_TOKENS["WETH"]["address"]),
                     Web3.to_checksum_address(token_out_data["address"])
                 ]
                 tx = router.functions.swapExactTokensForTokens(
@@ -85,10 +92,11 @@ def swap(web3, account, router, token_in, token_out, amount_decimal):
             return receipt
         except Exception as e:
             if "nonce too low" in str(e).lower() or "already known" in str(e).lower():
-                print(f"[⚠️] Nonce terlalu rendah, mencoba ulang dengan nonce yang lebih tinggi (percobaan ke-{retry_count + 1})")
                 retry_count += 1
+                print(f"[!] Mencoba ulang transaksi ({retry_count}/{max_retries})...")
                 time.sleep(2)
                 continue
+            print(f"[!] Error: {str(e)}")
             raise e
     
-    raise Exception("Gagal melakukan swap setelah beberapa kali percobaan")
+    raise Exception("Gagal melakukan swap setelah beberapa kali percobaan. Silakan coba lagi nanti.")
